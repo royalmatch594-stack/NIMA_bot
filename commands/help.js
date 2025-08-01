@@ -8,7 +8,6 @@ async function helpCommand(sock, chatId, message) {
    *🤖 ${settings.botName || 'NIMA-MD'}*  
    Version: *${settings.version || '2.0.5'}*
    by ${settings.botOwner || 'Mr NIMA Hacker'}
-   YT : ${global.ytch}
 ╚═══════════════════╝
 
 *Available Commands:*
