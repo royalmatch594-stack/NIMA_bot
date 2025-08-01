@@ -10,7 +10,7 @@ This is a WhatsApp bot built using the Baileys library for group management, inc
 
 <div align="center"> 
   <a href="https://youtube.com/@mr_unique_hacker"> 
-    <img src="https://github.com/mruniquehacker/NIMA-MD/blob/main/assets/bot_image.jpg" alt="Knight Bot" height="300"> 
+    <img src="https://i.postimg.cc/029xmZVt/IMG-20250801-003906-211.jpg" alt="NIMA BOT" height="300"> 
   </a> 
 </div>
 
