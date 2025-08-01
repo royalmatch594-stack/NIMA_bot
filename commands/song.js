@@ -226,4 +226,122 @@ async function songCommand(sock, chatId, message) {
     }
 }
 
+module.exports = songCommand;          const cdnx = await savetube.getCDN();
+         if (!cdnx.status) return cdnx;
+         const cdn = cdnx.data;
+         const result = await savetube.request(`https://${cdn}${savetube.api.info}`, {
+            url: `https://www.youtube.com/watch?v=${id}`
+         });
+         if (!result.status) return result;
+         const decrypted = await savetube.crypto.decrypt(result.data.data); var dl;
+         try {
+            dl = await savetube.request(`https://${cdn}${savetube.api.download}`, {
+               id: id,
+               downloadType: format === 'mp3' ? 'audio' : 'video',
+               quality: format === 'mp3' ? '128' : format,
+               key: decrypted.key
+            });
+         } catch (error) {
+            throw new Error('Failed to get download link. Please try again later.');
+         };
+         return {
+            status: true,
+            code: 200,
+            result: {
+               title: decrypted.title || "Unknown Title",
+               type: format === 'mp3' ? 'audio' : 'video',
+               format: format,
+               thumbnail: decrypted.thumbnail || `https://i.ytimg.com/vi/${id}/0.jpg`,
+               download: dl.data.data.downloadUrl,
+               id: id,
+               key: decrypted.key,
+               duration: decrypted.duration,
+               quality: format === 'mp3' ? '128' : format,
+               downloaded: dl.data.data.downloaded
+            }
+         }
+      } catch (error) {
+         throw new Error('An error occurred while processing your request. Please try again later.');
+      }
+   }
+};
+
+async function songCommand(sock, chatId, message) {
+    try {
+        const text = message.message?.conversation || message.message?.extendedTextMessage?.text;
+        const searchQuery = text.split(' ').slice(1).join(' ').trim();
+        if (!searchQuery) {
+            return await sock.sendMessage(chatId, { text: "What song do you want to download?" });
+        }
+
+        // Determine if input is a YouTube link or search query
+        let videoUrl = '';
+        if (searchQuery.startsWith('http://') || searchQuery.startsWith('https://')) {
+            videoUrl = searchQuery;
+        } else {
+            // Search YouTube for the video
+            const { videos } = await yts(searchQuery);
+            if (!videos || videos.length === 0) {
+                return await sock.sendMessage(chatId, { text: "No songs found!" });
+            }
+            videoUrl = videos[0].url;
+        }
+
+        // Download using savetube
+        let result;
+        try {
+            result = await savetube.download(videoUrl, 'mp3');
+        } catch (err) {
+            return await sock.sendMessage(chatId, { text: "Failed to fetch download link. Try again later." });
+        }
+        if (!result || !result.status || !result.result || !result.result.download) {
+            return await sock.sendMessage(chatId, { text: "Failed to get a valid download link from the API." });
+        }
+
+        // Send thumbnail and title first
+        let sentMsg;
+        try {
+            sentMsg = await sock.sendMessage(chatId, {
+                image: { url: result.result.thumbnail },
+                caption: `*${result.result.title}*\n\n> _Downloading your song..._\n > *_By NIMA Bot MD_*`
+            }, { quoted: message });
+        } catch (e) {
+            // If thumbnail fails, fallback to just sending the audio
+            sentMsg = message;
+        }
+
+        // Download the MP3 file
+        const tempDir = path.join(__dirname, '../temp');
+        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
+        const tempFile = path.join(tempDir, `${Date.now()}.mp3`);
+        const response = await axios({ url: result.result.download, method: 'GET', responseType: 'stream' });
+        if (response.status !== 200) {
+            return await sock.sendMessage(chatId, { text: "Failed to download the song file from the server." });
+        }
+        const writer = fs.createWriteStream(tempFile);
+        response.data.pipe(writer);
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        // Send the MP3 file
+        await sock.sendMessage(chatId, {
+            audio: { url: tempFile },
+            mimetype: "audio/mpeg",
+            fileName: `${result.result.title}.mp3`,
+            ptt: false
+        }, { quoted: message });
+
+        // Clean up temp file
+        setTimeout(() => {
+            try {
+                if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+            } catch {}
+        }, 5000);
+    } catch (error) {
+        await sock.sendMessage(chatId, { text: "Download failed. Please try again later." });
+    }
+}
+
 module.exports = songCommand; 
