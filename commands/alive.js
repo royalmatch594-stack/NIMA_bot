@@ -1,7 +1,7 @@
 const settings = require("../settings");
 async function aliveCommand(sock, chatId, message) {
     try {
-        const message1 = `*🤖 Knight Bot is Active!*\n\n` +
+        const message1 = `*🤖 NIMA Bot is Active!*\n\n` +
                        `*Version:* ${settings.version}\n` +
                        `*Status:* Online\n` +
                        `*Mode:* Public\n\n` +
@@ -19,7 +19,7 @@ async function aliveCommand(sock, chatId, message) {
                 isForwarded: true,
                 forwardedNIMAMessageInfo: {
                     NIMAJid: '120363161513685998@NIMA',
-                    NIMAName: 'KnightBot MD',
+                    NIMAName: 'NIMA MD',
                     serverMessageId: -1
                 }
             }
